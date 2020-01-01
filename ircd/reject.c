@@ -364,6 +364,41 @@ remove_reject_mask(const char *mask1, const char *mask2)
 	return n;
 }
 
+void
+report_rejects(struct Client *source_p)
+{
+	static char ip_buf[HOSTIPLEN];
+	rb_dlink_node *ptr;
+
+	RB_DLINK_FOREACH(ptr, reject_list.head)
+	{
+		rb_patricia_node_t *pnode = ptr->data;
+		reject_t *rdata = pnode->data;
+		time_t remaining = rdata->time + ConfigFileEntry.reject_duration - rb_current_time();
+		const char *reason;
+		const char *ip;
+
+		if (rdata->aconf)
+			reason = get_user_ban_reason(rdata->aconf);
+		else if (rdata->reason)
+			reason = rdata->reason;
+		else
+			reason = "<no reason available>";
+
+		ip = rb_inet_ntop(pnode->prefix->family, &pnode->prefix->add, ip_buf, sizeof ip_buf);
+		if (ip == NULL)
+			ip = "<unknown>";
+
+		sendto_one_numeric(source_p, RPL_STATSDEBUG, "%s %s@%s %d :%s%s",
+				ip,
+				rdata->aconf ? rdata->aconf->user : "*",
+				rdata->aconf ? rdata->aconf->host : "*",
+				(int) remaining,
+				rdata->aconf ? "Banned: " : "",
+				reason);
+	}
+}
+
 int
 throttle_add(struct sockaddr *addr)
 {

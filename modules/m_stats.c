@@ -118,6 +118,7 @@ static void stats_tresv(struct Client *);
 static void stats_resv(struct Client *);
 static void stats_ssld(struct Client *);
 static void stats_usage(struct Client *);
+static void stats_reject(struct Client *);
 static void stats_tstats(struct Client *);
 static void stats_uptime(struct Client *);
 static void stats_shared(struct Client *);
@@ -175,7 +176,7 @@ static struct stats_cmd stats_cmd_table[256] = {
 	['q'] = HANDLER_NORM(stats_tresv,	true,	false),
 	['Q'] = HANDLER_NORM(stats_resv,	true,	false),
 	['r'] = HANDLER_NORM(stats_usage,	true,	false),
-	['R'] = HANDLER_NORM(stats_usage,	true,	false),
+	['R'] = HANDLER_NORM(stats_reject,	true,	true),
 	['s'] = HANDLER_NORM(stats_ssld,	true,	true),
 	['S'] = HANDLER_NORM(stats_ssld,	true,	true),
 	['t'] = HANDLER_NORM(stats_tstats,	true,	false),
@@ -986,6 +987,12 @@ stats_usage (struct Client *source_p)
 			   (int) rus.ru_nsignals, (int) rus.ru_nvcsw,
 			   (int) rus.ru_nivcsw);
 #endif
+}
+
+static void
+stats_reject (struct Client *source_p)
+{
+	report_rejects(source_p);
 }
 
 static void
